@@ -1,22 +1,62 @@
 import React from "react";
 
+import { GoogleLogin } from "react-google-login";
+import FacebookLogin from "react-facebook-login";
+
 function Login() {
+  const responseGoogle = (response) => {
+    console.log(response);
+  };
+
+  const responseFacebook = (response) => {
+    console.log(response);
+  };
+
   return (
     <div className="max-w-md mx-auto flex flex-col py-8 px-4 space-y-4 bg-white rounded-xl shadow-xl">
-      <h2 className="text-3xl font-semibold text-gray-800">Login</h2>
+      <h2 className="text-3xl font-semibold text-gray-800">Lunch Roulette</h2>
+      <p> Matchmaker</p>
+      <br></br>
+      <div>
+        <GoogleLogin
+          clientId="YOUR_CLIENT_ID"
+          buttonText="Sign in with Google"
+          onSuccess={responseGoogle}
+          onFailure={responseGoogle}
+          cookiePolicy={"single_host_origin"}
+          className="w-full flex justify-center bg-white border border-gray-300 rounded-md shadow-sm py-2 px-4 text-sm font-medium  text-gray-700 hover:bg-gray-50"
+        />
+      </div>
+      <div>
+        <FacebookLogin
+          appId="YOUR_APP_ID"
+          fields="name,email,picture"
+          callback={responseFacebook}
+          cssClass="w-full flex justify-center bg-white border border-gray-300 rounded-md shadow-sm py-2 px-4 text-sm font-medium  text-gray-700 hover:bg-gray-50"
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="#1877f2"
+              width="20"
+              height="20"
+              className="mx-5"
+            >
+              <path d="M21.5 0h-19C1.673 0 .01 1.673.01 3.75L0 20.25c0 2.076 1.673 3.75 3.75 3.75h19c2.076 0 3.75-1.673 3.75-3.75V3.75c0-2.077-1.674-3.75-3.75-3.75zm-3.937 7.5h-1.473c-.639 0-.888.3-.888.813v1.063h2.738l-.363 2.775h-2.375v7.313h-3.188v-7.313h-1.9v-2.775h1.9V7.163c0-1.888 1.175-2.913 2.813-2.913h1.537v2.25z" />
+            </svg>
+          }
+        />
+      </div>
+      <div class="bg-gray z-1">or</div>
+
       <form className="space-y-6">
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email address
-          </label>
           <div className="mt-1">
             <input
               id="email"
               name="email"
               type="email"
+              placeholder="Email Address"
               autoComplete="email"
               required
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -24,17 +64,12 @@ function Login() {
           </div>
         </div>
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Password
-          </label>
           <div className="mt-1">
             <input
               id="password"
               name="password"
               type="password"
+              placeholder="password"
               autoComplete="current-password"
               required
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
