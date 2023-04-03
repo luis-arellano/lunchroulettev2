@@ -28,13 +28,8 @@ def create_user():
 
     user = User(name=data_dict["name"],
                 email=data_dict["email"],
-                location=data_dict["location"],
-                preferred_days=data_dict["preferred_days"],
-                preferred_times=data_dict['preferred_times'],
-                frequency=data_dict['frequency'],
                 )
-    if data_dict.get('interests'):
-        User.interests = data['interests']
+    user.set_password(data_dict['password'])
     db.session.add(user)
     db.session.commit()
     return jsonify({"message": "User created successfully.", "user_id": user.id
