@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { GoogleLogin } from "react-google-login";
 import FacebookLogin from "react-facebook-login";
 import apiService from "../apiService";
+import Loader from "./Loader";
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const responseGoogle = (response) => {
     console.log(response);
@@ -16,9 +18,9 @@ function Login() {
   };
 
   const handleSubmit = async (event) => {
-    console.log("event: ", event);
-    console.log("API: ", process.env.REACT_APP_API_BASE_URL);
     event.preventDefault();
+    setIsLoading(true);
+
     // Handle login or sign up logic here
     const userData = {
       name: event.target.name.value,
@@ -29,16 +31,21 @@ function Login() {
     // Create User via API
     try {
       const result = await apiService.createUser(userData);
-      console.log("RESULT: ", result);
+
+      setTimeout(function () {
+        // This code will execute after a 3 second delay
+        console.log("Delayed code executed!");
+      }, 3000); // 3000 milliseconds (3 seconds) delay
     } catch (error) {
-      console.error("Error creating user:", error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="max-w-md mx-auto flex flex-col py-8 px-4 space-y-4 bg-white rounded-xl shadow-xl">
       <h2 className="text-3xl font-semibold text-gray-800">Lunch Roulette</h2>
-      <p> Matchmaker</p>
+      <p> Lunch-time Matchmaker</p>
       <br></br>
       <div>
         <GoogleLogin
@@ -170,9 +177,12 @@ function Login() {
         </span>
         <button
           className="font-medium text-indigo-600 hover:text-indigo-500"
-          onClick={() => setIsLogin(!isLogin)}
+          onClick={() => {
+            setIsLogin(!isLogin);
+          }}
         >
           {isLogin ? "Sign up" : "Log in"}
+          {isLoading && <Loader></Loader>}
         </button>
       </div>
     </div>
