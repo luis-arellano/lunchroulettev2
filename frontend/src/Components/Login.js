@@ -2,12 +2,15 @@ import React, { useState } from "react";
 
 import { GoogleLogin } from "react-google-login";
 import FacebookLogin from "react-facebook-login";
-import apiService from "../apiService";
+import { CreateUser, LoginUser } from "../apiService";
 import Loader from "./Loader";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  // const history = useHistory();
+  const navigate = useNavigate();
 
   const responseGoogle = (response) => {
     console.log(response);
@@ -23,19 +26,24 @@ function Login() {
 
     // Handle login or sign up logic here
     const userData = {
-      name: event.target.name.value,
+      name: isLogin ? null : event.target.name.value,
       email: event.target.email.value,
       password: event.target.password.value,
     };
 
-    // Create User via API
-    try {
-      const result = await apiService.createUser(userData);
+    let result = null;
 
-      setTimeout(function () {
-        // This code will execute after a 3 second delay
-        console.log("Delayed code executed!");
-      }, 3000); // 3000 milliseconds (3 seconds) delay
+    // Make API calls to either Log In or Create the user
+    try {
+      if (isLogin) {
+        console.log("user: ", userData);
+        result = await LoginUser(userData);
+        console.log("LOGING: ", result);
+      } else {
+        result = await CreateUser(userData);
+      }
+
+      navigate("/dashboard");
     } catch (error) {
     } finally {
       setIsLoading(false);

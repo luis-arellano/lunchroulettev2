@@ -5,8 +5,8 @@ import { RadioGroup } from "@material-ui/core";
 import { FormLabel } from "@material-ui/core";
 import { FormControlLabel } from "@material-ui/core";
 import { Radio } from "@material-ui/core";
-import LocationSelector from "./Components/SelectLocation";
-import AdditionalSettingsModal from "./Components/AdditionalSettings";
+import LocationSelector from "./SelectLocation";
+import AdditionalSettingsModal from "./AdditionalSettings";
 
 export default function LunchSettings() {
   const isInitialMount = useRef(true);
