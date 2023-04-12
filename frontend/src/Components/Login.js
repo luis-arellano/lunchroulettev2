@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  // const history = useHistory();
+  const [errorMessage, setErrorMessage] = useState("");
+
   const navigate = useNavigate();
 
   const responseGoogle = (response) => {
@@ -36,15 +37,15 @@ function Login() {
     // Make API calls to either Log In or Create the user
     try {
       if (isLogin) {
-        console.log("user: ", userData);
         result = await LoginUser(userData);
-        console.log("LOGING: ", result);
       } else {
         result = await CreateUser(userData);
       }
 
       navigate("/dashboard");
     } catch (error) {
+      console.log("set error");
+      setErrorMessage("Sorry, we couldn't find that account");
     } finally {
       setIsLoading(false);
     }
@@ -171,6 +172,11 @@ function Login() {
           )}
         </div>
         <div>
+          {errorMessage && (
+            <p className="text-sm bg-red-100 border text-red-700 m-2 px-4 py-3 rounded relative">
+              {errorMessage}
+            </p>
+          )}
           <button
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
