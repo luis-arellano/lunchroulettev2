@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, redirect, send_from_directory, make_response, render_template
+from flask import Response
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from models import User, Match, Review
 from create_app import app, db
@@ -8,12 +10,39 @@ import json
 # Initialize the database
 db.init_app(app)
 
-CORS(app)  # comment this on deployment
+# CORS(app)  # comment this on deployment
+CORS(app, supports_credentials=True)
+
+app.config['SECRET_KEY'] = '36&462134kjKDhuIS_d23'
+app.config.update(
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=False,
+    SESSION_COOKIE_SAMESITE=None
+)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 
 
 @app.route('/')
 def index():
-    return ("Welcome to Lunch Roulette")
+    # print('current user: ', current_user.is_authenticated)
+    return render_template('index.html')
+    # return ("Welcome to Lunch Roulette")
+
+
+@app.route('/get_current_user_id', methods=['GET'])
+@login_required
+def get_current_user_id():
+    response = Response(jsonify({'user_id': current_user.id}), 200)
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response, 200
 
 
 @app.route('/login', methods=['POST'])
@@ -26,20 +55,36 @@ def login():
         return jsonify({'message': 'Email and password are required'}), 400
 
     user = User.query.filter_by(email=email).first()
-    print('USER: ', user)
 
     if not user or not user.check_password(password):
-        return jsonify({'message': 'Invalid Credentials'}), 401
+        return jsonify({'message': 'Invalid email or password'}), 401
 
-    return jsonify({'message': 'Login successful'}), 200
+    login_user(user)
+    print('current user: ', current_user)
+    print('Authen: ', current_user.is_authenticated)
+
+    response = jsonify({'message': 'Login successful'})
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Origin',
+                         request.headers.get('Origin'))
+    print(response)
+    return response, 200
 
 
-@app.route('/test')
+@ app.route('/logout')
+@ login_required
+def logout():
+    logout_user()
+    return redirect('/')
+
+
+@ app.route('/test')
+@ login_required
 def test():
     return jsonify({"message": "Test Api Handler"}), 200
 
 
-@app.route("/users", methods=["POST"])
+@ app.route("/users", methods=["POST"])
 def create_user():
     data = request.get_json()
     data_dict = data
@@ -54,8 +99,10 @@ def create_user():
                     })
 
 
-@app.route('/get_user/<int:user_id>', methods=['GET'])
+@ app.route('/get_user/<int:user_id>', methods=['GET'])
+@ login_required
 def get_user(user_id):
+
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"message": "User not found"}), 404
@@ -72,7 +119,8 @@ def get_user(user_id):
     })
 
 
-@app.route('/update_user/<int:user_id>', methods=['POST'])
+@ app.route('/update_user/<int:user_id>', methods=['POST'])
+@ login_required
 def update_user(user_id):
     data = request.get_json()
 

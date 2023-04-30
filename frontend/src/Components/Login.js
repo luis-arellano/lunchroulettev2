@@ -44,7 +44,7 @@ function Login() {
 
       navigate("/dashboard");
     } catch (error) {
-      console.log("set error");
+      console.log("set error", error);
       setErrorMessage("Sorry, we couldn't find that account");
     } finally {
       setIsLoading(false);
