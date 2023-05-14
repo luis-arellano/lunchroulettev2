@@ -32,16 +32,13 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    # print('current user: ', current_user.is_authenticated)
     return render_template('index.html')
-    # return ("Welcome to Lunch Roulette")
 
 
 @app.route('/get_current_user_id', methods=['GET'])
-@login_required
+# @login_required
 def get_current_user_id():
     response = Response(jsonify({'user_id': current_user.id}), 200)
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response, 200
 
 
@@ -63,12 +60,7 @@ def login():
     print('current user: ', current_user)
     print('Authen: ', current_user.is_authenticated)
 
-    response = jsonify({'message': 'Login successful'})
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Origin',
-                         request.headers.get('Origin'))
-    print(response)
-    return response, 200
+    return jsonify({'message': 'Login successful'})
 
 
 @ app.route('/logout')
