@@ -30,18 +30,13 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
-@app.route('/static/<path:path>')
-def send_static(path):
-    return send_from_directory(app.static_folder, path)
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
 @app.route('/get_current_user_id', methods=['GET'])
-# @login_required
+@login_required
 def get_current_user_id():
     response = Response(jsonify({'user_id': current_user.id}), 200)
     return response, 200
