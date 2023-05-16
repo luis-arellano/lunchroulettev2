@@ -1,14 +1,26 @@
-from flask import Flask, request, jsonify, session, redirect, send_from_directory, make_response, render_template
+from flask import Flask, request, jsonify, session, redirect, send_from_directory, make_response, render_template, session
 from flask import Response
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
-from models import User, Match, Review
 from create_app import app, db
 from flask_cors import CORS  # comment this on deployment
 import json
 
-# Initialize the database
-db.init_app(app)
+from sqlalchemy.sql import func
+
+from datetime import datetime, timezone, timedelta
+
+from functools import wraps
+
+from flask import request
+from flask_restx import Api, Resource, fields
+
+import jwt
+
+from models import db, User, JWTTokenBlocklist
+
+import requests
+
+rest_api = Api(version="1.0", title="Users API")
 
 # CORS(app)  # comment this on deployment
 CORS(app, supports_credentials=True)
@@ -20,68 +32,80 @@ app.config.update(
     SESSION_COOKIE_SAMESITE=None
 )
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
 
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(user_id)
+        if "authorization" in request.headers:
+            token = request.headers["Authorization"].split(" ")[1]
 
+        if not token:
+            return {"success": False, "msg": "Valid JWT token is missing"}, 400
 
-@app.route('/static/<path:path>')
-def send_static(path):
-    return send_from_directory(app.static_folder, path)
+        try:
+            data = jwt.decode(token, 'secret',
+                              algorithms=["HS256"])
+            current_user = User.get_by_email(data["email"])
 
+            if not current_user:
+                return {"success": False,
+                        "msg": "Sorry. Wrong auth token. This user does not exist."}, 400
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+            token_expired = db.session.query(
+                JWTTokenBlocklist.id).filter_by(jwt_token=token).scalar()
+            print("sdsdsdsd~", token_expired)
 
+            if token_expired is not None:
+                return {"success": False, "msg": "Token revoked."}, 400
 
-@app.route('/get_current_user_id', methods=['GET'])
-# @login_required
-def get_current_user_id():
-    response = Response(jsonify({'user_id': current_user.id}), 200)
-    return response, 200
+            if not current_user.check_jwt_auth_active():
+                return {"success": False, "msg": "Token expired."}, 400
+        except:
+            return {"success": False, "msg": "Token is invalid"}, 400
+
+        return f(current_user, *args, **kwargs)
+
+    return decorator
 
 
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
 
-    if not email or not password:
-        return jsonify({'message': 'Email and password are required'}), 400
+    req_data = request.get_json()
+    _email = req_data.get("email")
+    _password = req_data.get("password")
 
-    user = User.query.filter_by(email=email).first()
+    user_exists = User.get_by_email(_email)
+    print(user_exists)
+    if not user_exists:
+        return {"success": False,
+                "msg": "This email does not exist."}, 400
 
-    if not user or not user.check_password(password):
-        return jsonify({'message': 'Invalid email or password'}), 401
+    if not user_exists.check_password(_password):
+        return {"success": False,
+                "msg": "Wrong credentials."}, 400
 
-    login_user(user)
-    print('current user: ', current_user)
-    print('Authen: ', current_user.is_authenticated)
+    # create access token uwing JWT
+    token = jwt.encode({'email': _email, 'exp': datetime.utcnow(
+    ) + timedelta(minutes=30)}, 'secret')
 
-    return jsonify({'message': 'Login successful'})
+    user_exists.set_jwt_auth_active(True)
+    user_exists.save()
 
-
-@ app.route('/logout')
-@ login_required
-def logout():
-    logout_user()
-    return redirect('/')
-
-
-@ app.route('/test')
-@ login_required
-def test():
-    return jsonify({"message": "Test Api Handler"}), 200
+    return {"success": True,
+            "token": token,
+            "user": user_exists.to_json()}, 200
 
 
-@ app.route("/users", methods=["POST"])
+@app.route('/get_current_user_id', methods=['GET'])
+@token_required
+def get_current_user_id(current_user):
+    return jsonify({"user_id": current_user.id})
+
+
+@app.route("/users", methods=["POST"])
 def create_user():
     data = request.get_json()
     data_dict = data
@@ -96,29 +120,9 @@ def create_user():
                     })
 
 
-@ app.route('/get_user/<int:user_id>', methods=['GET'])
-@ login_required
-def get_user(user_id):
-
-    user = User.query.get(user_id)
-    if user is None:
-        return jsonify({"message": "User not found"}), 404
-
-    return jsonify({
-        'name': user.name,
-        'email': user.email,
-        'location': user.location,
-        'preferred_days': user.preferred_days,
-        'preferred_times': user.preferred_times,
-        'interests': user.interests,
-        'frequency': user.frequency,
-        'paused': user.paused
-    })
-
-
-@ app.route('/update_user/<int:user_id>', methods=['POST'])
-@ login_required
-def update_user(user_id):
+@app.route('/update_user', methods=['POST'])
+@token_required
+def update_user(self, current_user):
     data = request.get_json()
 
     # Check if all required fields are present
@@ -127,6 +131,7 @@ def update_user(user_id):
     if not all(field in data for field in required_fields):
         return jsonify({"message": "Bad request"}), 400
 
+    '''
     user = User.query.get(user_id)
     if user is None:
         return jsonify({"message": "User not found"}), 404
@@ -140,14 +145,19 @@ def update_user(user_id):
     user.interests = data.get("interests", user.interests)
     user.paused = data.get("paused", user.paused)
     db.session.commit()
+    '''
     return jsonify({"message": "User updated successfully."})
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
-    # Only create the models once
-    with app.app_context():
-        db.create_all()
-        if not db.engine.dialect.has_table(db.engine, 'user'):
-            print('CREATING ALL TABLES')
-            db.create_all()
+@app.route('/logout')
+@token_required
+def post(current_user):
+    _jwt_token = request.headers["authorization"]
+
+    jwt_block = JWTTokenBlocklist(
+        jwt_token=_jwt_token, created_at=datetime.now(timezone.utc))
+    jwt_block.save()
+
+    current_user.set_jwt_auth_active(False)
+    current_user.save()
+    return jsonify({"success": True})

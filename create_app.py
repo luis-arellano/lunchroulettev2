@@ -6,7 +6,11 @@ app = Flask(__name__, static_url_path='',
             static_folder='frontend/build/static', template_folder='frontend/build/templates')
 db_uri = os.environ.get('LUNCHROULETTE_URI')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app.config['SQLALCHEMY_DATABASE_URI'] =\
+    'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
