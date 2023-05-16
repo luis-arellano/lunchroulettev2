@@ -69,7 +69,6 @@ def token_required(f):
 
     return decorator
 
-
 @app.route('/login', methods=['POST'])
 def login():
 

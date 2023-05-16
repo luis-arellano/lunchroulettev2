@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 
 app = Flask(__name__, static_url_path='',
-            static_folder='frontend/build/static', template_folder='frontend/build/templates')
+            static_folder='frontend/build/static', template_folder='frontend/build')
 db_uri = os.environ.get('LUNCHROULETTE_URI')
 
 basedir = os.path.abspath(os.path.dirname(__file__))
