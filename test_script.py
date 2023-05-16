@@ -2,7 +2,7 @@ import requests
 import json
 import os
 
-BASE = "http://127.0.01:5000/"
+BASE = "http://127.0.0.1:5000/"
 
 payload = json.dumps({
     "name": "John Doe",

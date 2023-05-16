@@ -42,6 +42,7 @@ async function getCurrentUserId() {
     headers: {
       "Content-Type": "application/json",
       credentials: "include",
+      authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     // credentials: "include",
   });

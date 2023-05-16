@@ -38,6 +38,7 @@ function Login() {
     try {
       if (isLogin) {
         result = await LoginUser(userData);
+        localStorage.setItem("token", result.token);
       } else {
         result = await CreateUser(userData);
       }
