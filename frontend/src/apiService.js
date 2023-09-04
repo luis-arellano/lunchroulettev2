@@ -23,9 +23,9 @@ async function LoginUser(userData) {
   //** User during Sing in */
   const response = await fetch(`${API_BASE_URL}/login`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      credentials: "include",
     },
     body: JSON.stringify(userData),
   });
@@ -41,9 +41,8 @@ async function getCurrentUserId() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      credentials: "include",
     },
-    // credentials: "include",
+    credentials: "include",
   });
   if (!response.ok) {
     throw new Error(`Error retrieving current user ID: ${response.statusText}`);
@@ -52,13 +51,13 @@ async function getCurrentUserId() {
 }
 
 async function getUserData(userId) {
-  const response = await fetch(`${API_BASE_URL}/get_user/${userId}}`, {
+  const response = await fetch(`${API_BASE_URL}/get_user/${userId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
   });
   if (!response.ok) {
-    throw new Error("Error getting user data: ${response.statusText}");
+    throw new Error(`Error getting user data: ${response.statusText}`);
   }
   return response.json();
 }

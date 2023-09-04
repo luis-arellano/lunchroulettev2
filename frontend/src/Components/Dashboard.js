@@ -9,7 +9,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Get User Data when the Dashboard component mounts.
-
     async function fetchData() {
       try {
         const response = await getCurrentUserId();
@@ -23,10 +22,28 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Fetch user data whenever currentUserId changes
+    async function fetchUserData() {
+      if (currentUserId) {
+        try {
+          const data = await getUserData(currentUserId);
+          console.log('USER DATA: ', data);
+          setUserData(data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    }
+
+    fetchUserData();
+  }, [currentUserId]);
+  
+
   return (
     <div class="grid grid-cols-2 gap-1 bg-grey">
       <div class="col-span-1">
-        <div> {userData}</div>
+        <div>{userData ? JSON.stringify(userData) : "Loading user data..."}</div>
 
         <NextLunch />
       </div>

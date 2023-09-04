@@ -11,7 +11,8 @@ import json
 db.init_app(app)
 
 # CORS(app)  # comment this on deployment
-CORS(app, supports_credentials=True)
+# CORS(app, supports_credentials=True)
+CORS(app, origins="http://localhost:3000", supports_credentials=True)
 
 app.config['SECRET_KEY'] = '36&462134kjKDhuIS_d23'
 app.config.update(
@@ -43,6 +44,7 @@ def index():
 @app.route('/get_current_user_id', methods=['GET'])
 @login_required
 def get_current_user_id():
+    print('current user: ', current_user.id)
     return jsonify({'user_id': current_user.id})
 
 
@@ -51,6 +53,7 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    print('SESSION: ', session)
 
     if not email or not password:
         return jsonify({'message': 'Email and password are required'}), 400
