@@ -14,7 +14,6 @@ export default function Dashboard() {
         const response = await getCurrentUserId();
         const { user_id } = await response.json();
         setCurrentUserId(user_id);
-        console.log("USER ID: ", user_id);
       } catch (error) {
         console.log("GET USER ERROR: ", error);
       }
@@ -43,8 +42,6 @@ export default function Dashboard() {
   return (
     <div class="grid grid-cols-2 gap-1 bg-grey">
       <div class="col-span-1">
-        <div>{userData ? JSON.stringify(userData) : "Loading user data..."}</div>
-
         <NextLunch />
       </div>
       <div class="col-span-1">

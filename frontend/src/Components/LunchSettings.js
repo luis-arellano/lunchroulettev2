@@ -11,7 +11,6 @@ import { updateUserSettings } from "../apiService";
 
 
 export default function LunchSettings({userDataProp}) {
-  // const isInitialMount = useRef(true);
   const [user, setUser] = useState({
     user_id: null,
     name: "test-form",
