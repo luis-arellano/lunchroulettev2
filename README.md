@@ -52,13 +52,12 @@ The db is stored in AWS RDS.
 
 # Working with Env Variables
 
-To get the environmental variables stores in the machine
+To get the environmental variables stored in the machine we need to save them on ~/.bash_profile (mac)
+
+nano ~/.bash_profile
+
+LUNCHROULETTE_URI = 'path_to_the_uri'
+
+To view the varibale
 
 echo $VARIABLE_NAME
-
-To save a variable name
-
-echo 'export VARIABLE_NAME=VALUE' >> ~/.bashrc
-source ~/.bashrc
-
-echo 'export LUNCHROULETTE_URI=mysql+mysqlconnector://root:rockclimber1!@database-1.ciiowaujelgi.us-west-2.rds.amazonaws.com:3306/lunchroulette' >> ~/.bashrc

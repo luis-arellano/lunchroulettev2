@@ -48,7 +48,7 @@ export default function Dashboard() {
         <NextLunch />
       </div>
       <div class="col-span-1">
-        <LunchSettings />
+        <LunchSettings userDataProp={userData} />
       </div>
     </div>
   );

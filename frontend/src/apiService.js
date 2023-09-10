@@ -37,7 +37,7 @@ async function LoginUser(userData) {
 }
 
 async function getCurrentUserId() {
-  const response = await fetch(`${API_BASE_URL}/get_current_user_id`, {
+  const response = await fetch(`${API_BASE_URL}/users/current`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -51,7 +51,7 @@ async function getCurrentUserId() {
 }
 
 async function getUserData(userId) {
-  const response = await fetch(`${API_BASE_URL}/get_user/${userId}`, {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -62,4 +62,21 @@ async function getUserData(userId) {
   return response.json();
 }
 
-export { LoginUser, CreateUser, getUserData, getCurrentUserId };
+async function updateUserSettings(userId, userData) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(userData),
+  });
+  if (!response.ok) {
+    throw new Error(`Error updating user settings: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export { LoginUser, CreateUser, getUserData, getCurrentUserId , updateUserSettings};
+
+

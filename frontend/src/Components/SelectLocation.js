@@ -68,7 +68,11 @@ const names = [
 
 const LocationSelector = (props) => {
   const classes = useStyles();
-  const [locationName, setLocationName] = React.useState([]);
+  const [locationName, setLocationName] = React.useState( props.value || []);
+
+  React.useEffect(() => {
+    setLocationName(props.value || []);
+  }, [props.value]);
 
   const handleChange = (event) => {
     const selectedLocations = event.target.value;

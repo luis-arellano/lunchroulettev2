@@ -41,7 +41,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/get_current_user_id', methods=['GET'])
+@app.route('/users/current', methods=['GET'])
 @login_required
 def get_current_user_id():
     print('current user: ', current_user.id)
@@ -98,7 +98,7 @@ def create_user():
                     })
 
 
-@ app.route('/get_user/<int:user_id>', methods=['GET'])
+@ app.route('/users/<int:user_id>', methods=['GET'])
 @ login_required
 def get_user(user_id):
 
@@ -106,10 +106,13 @@ def get_user(user_id):
     if user is None:
         return jsonify({"message": "User not found"}), 404
 
+    location_list = user.location.split('|') if user.location else []
+
     return jsonify({
+        'user_id':user.id,
         'name': user.name,
         'email': user.email,
-        'location': user.location,
+        'location': location_list,
         'preferred_days': user.preferred_days,
         'preferred_times': user.preferred_times,
         'interests': user.interests,
@@ -118,16 +121,23 @@ def get_user(user_id):
     })
 
 
-@ app.route('/update_user/<int:user_id>', methods=['POST'])
-@ login_required
+@app.route('/users/<int:user_id>', methods=['PUT'])
+@login_required
 def update_user(user_id):
     data = request.get_json()
 
     # Check if all required fields are present
-    required_fields = ["name", "email", "location",
-                       "preferred_days", "preferred_times"]
-    if not all(field in data for field in required_fields):
-        return jsonify({"message": "Bad request"}), 400
+    required_fields = ["name", "email", "paused",
+                       "frequency"]
+    missing_fields = []
+
+    for field in required_fields:
+        if field not in data:
+            missing_fields.append(field)
+
+    if missing_fields:
+        print('MISSING FIELDS:', ', '.join(missing_fields))
+        return jsonify({"message": "Bad request", "missing_fields": missing_fields}), 400
 
     user = User.query.get(user_id)
     if user is None:
@@ -135,7 +145,7 @@ def update_user(user_id):
 
     user.name = data.get("name", user.name)
     user.email = data.get("email", user.email)
-    user.location = data.get("location", user.location)
+    user.location = '|'.join(data.get("location", user.location))
     user.preferred_days = data.get("preferred_days", user.preferred_days)
     user.preferred_times = data.get("preferred_times", user.preferred_times)
     user.frequency = data.get("frequency", user.frequency)

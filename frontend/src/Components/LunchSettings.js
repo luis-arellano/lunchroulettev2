@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import { FormControl } from "@material-ui/core";
 import { RadioGroup } from "@material-ui/core";
@@ -7,31 +7,66 @@ import { FormControlLabel } from "@material-ui/core";
 import { Radio } from "@material-ui/core";
 import LocationSelector from "./SelectLocation";
 import AdditionalSettingsModal from "./AdditionalSettings";
+import { updateUserSettings } from "../apiService";
 
-export default function LunchSettings() {
-  const isInitialMount = useRef(true);
+
+export default function LunchSettings({userDataProp}) {
+  // const isInitialMount = useRef(true);
   const [user, setUser] = useState({
+    user_id: null,
     name: "test-form",
     email: "nothing@email.com",
-    isEnabled: false,
+    paused: false,
     frequency: "WEEKLY",
-    locationPreference: "",
+    location: "",
   });
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-    } else {
+    if (userDataProp) {
+      setUser(prevUser =>( {
+        ...prevUser,
+        user_id: userDataProp.user_id || prevUser.user_id,
+        name: userDataProp.name || prevUser.name,
+        email: userDataProp.email || prevUser.email,
+        paused: userDataProp.paused !== undefined ? userDataProp.paused : prevUser.paused,
+        frequency: userDataProp.frequency || prevUser.frequency,
+        location: userDataProp.location || prevUser.location,
+      }));
+    }
+  }, [userDataProp]);
+
+  useEffect(() => {
+    const submitForm = async (user) => {
+      console.log('Submitting form with user data:', user);
+
+      try {
+        if (user.user_id){
+          const updateResponse = await updateUserSettings(user.user_id, user);
+          console.log("Update successful", updateResponse);
+        } else {
+          console.error("User ID is not available");
+        }
+      } catch (error) {
+        console.error("Error updating user settings", error);
+      }
+    };
+
+    if (user.user_id && userDataProp && userDataProp.user_id === user.user_id && (
+      userDataProp.paused !== user.paused || 
+      userDataProp.frequency !== user.frequency || 
+      userDataProp.location !== user.location || 
+      userDataProp.name !== user.name
+    )) {
       submitForm(user);
     }
-  }, [user]);
+
+  }, [user, userDataProp]);
 
   const handleEnableChange = (event) => {
     setUser((prevUser) => ({
       ...prevUser,
-      isEnabled: event.target.checked,
+      paused: event.target.checked,
     }));
-    // submitForm(user);
   };
 
   const handleFrequencyChange = (event) => {
@@ -52,13 +87,8 @@ export default function LunchSettings() {
     console.log("parent", locationName);
     setUser((prevUser) => ({
       ...prevUser,
-      locationPreference: locationName,
+      location: locationName,
     }));
-  };
-
-  const submitForm = (user) => {
-    // perform submission logic here
-    console.log("SUBMIT EVENT", user);
   };
 
   return (
@@ -75,12 +105,13 @@ export default function LunchSettings() {
             <input
               type="checkbox"
               value=""
+              checked={user.paused}
               class="sr-only peer"
               onChange={handleEnableChange}
             />
             <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
             <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-              Enable Lunch Roulette
+              Pause Lunch Roulette
             </span>
           </label>
         </div>
@@ -93,6 +124,7 @@ export default function LunchSettings() {
               row
               aria-labelledby="demo-radio-buttons-group-label"
               // defaultValue="Weekly"
+              value = {user.frequency}
               name="radio-buttons-group"
             >
               <FormControlLabel
@@ -108,7 +140,7 @@ export default function LunchSettings() {
                 onChange={handleFrequencyChange}
               />
               <FormControlLabel
-                value="FORTHNIGHTLU"
+                value="FORTHNIGHTLY"
                 control={<Radio style={{ color: "#4f46e5" }} />}
                 label="Fortnightly"
                 onChange={handleFrequencyChange}
@@ -122,7 +154,9 @@ export default function LunchSettings() {
             </RadioGroup>
             <hr />
 
-            <LocationSelector handleLocationChange={handleLocationChange} />
+            <LocationSelector 
+            value={user.location}
+            handleLocationChange={handleLocationChange} />
             <AdditionalSettingsModal />
           </FormControl>
         </div>
