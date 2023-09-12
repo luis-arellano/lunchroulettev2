@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, session, redirect, send_from_directory, make_response, render_template
 from flask import Response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -10,8 +11,10 @@ import json
 # Initialize the database
 db.init_app(app)
 
-# CORS(app)  # comment this on deployment
-# CORS(app, supports_credentials=True)
+if os.environ.get('IS_DEV') == 'true':
+    print('DEV Environment')
+    CORS(app, origins="http://localhost:3000", supports_credentials=True)
+
 CORS(app, origins="http://localhost:3000", supports_credentials=True)
 
 app.config['SECRET_KEY'] = '36&462134kjKDhuIS_d23'
@@ -153,6 +156,10 @@ def update_user(user_id):
     user.paused = data.get("paused", user.paused)
     db.session.commit()
     return jsonify({"message": "User updated successfully."})
+
+@app.route('/manifest.json')
+def send_manifest():
+    return send_from_directory('frontend/build', 'manifest.json')
 
 
 if __name__ == '__main__':
