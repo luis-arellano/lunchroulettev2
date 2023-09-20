@@ -7,13 +7,16 @@ from models import User, Match, Review
 from create_app import app, db
 from flask_cors import CORS  # comment this on deployment
 import json
+import matches
 
 # Initialize the database
 db.init_app(app)
 
 if os.environ.get('IS_DEV') == 'true':
-    print('DEV Environment')
+    app.logger.info('******** DEV Environment***** ')
     CORS(app, origins="http://localhost:3000", supports_credentials=True)
+else:
+    app.logger.info('******** PROD Environment***** ')
 
 CORS(app, origins="http://localhost:3000", supports_credentials=True)
 
@@ -56,7 +59,6 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    print('SESSION: ', session)
 
     if not email or not password:
         return jsonify({'message': 'Email and password are required'}), 400
@@ -67,8 +69,6 @@ def login():
         return jsonify({'message': 'Invalid email or password'}), 401
 
     login_user(user)
-    print('current user: ', current_user)
-    print('Authen: ', current_user.is_authenticated)
 
     return jsonify({'message': 'Login successful'})
 
@@ -87,6 +87,7 @@ def test():
 
 
 @ app.route("/users", methods=["POST"])
+@ login_required
 def create_user():
     data = request.get_json()
     data_dict = data
@@ -139,7 +140,7 @@ def update_user(user_id):
             missing_fields.append(field)
 
     if missing_fields:
-        print('MISSING FIELDS:', ', '.join(missing_fields))
+        app.logger.error('UPDATE USER MISSING FIELDS:', ', '.join(missing_fields))
         return jsonify({"message": "Bad request", "missing_fields": missing_fields}), 400
 
     user = User.query.get(user_id)
@@ -161,12 +162,16 @@ def update_user(user_id):
 def send_manifest():
     return send_from_directory('frontend/build', 'manifest.json')
 
+@app.route('/get_matches')
+def get_matches():
+    matches = matches.find_matches()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
     # Only create the models once
     with app.app_context():
         db.create_all()
-        if not db.engine.dialect.has_table(db.engine, 'user'):
+        if not db.engine.dialect.has_table(db.engine, 'users'):
             print('CREATING ALL TABLES')
             db.create_all()
