@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 import logging
+from flask_migrate import Migrate
 
 # Load environment variables from .env file
 load_dotenv('.env')
@@ -21,3 +22,6 @@ db = SQLAlchemy(app)
 
 # How to connect to the database from terminal.
 # mysql -h <host endpoint. -P 3306 -u root -p
+
+# Link the migration tool to the app and the database
+migrate = Migrate(app, db)

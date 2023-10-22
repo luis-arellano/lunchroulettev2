@@ -1,40 +1,79 @@
 from random import shuffle
 from models import User, Match, Review
-from itertools import combinations
-from collections import defaultdict
+from datetime import datetime, timedelta
+from create_app import app, db
 
-def find_matches():
-    # Retrieve all users who are not paused
+# from itertools import combinations
+# from collections import defaultdict
+# from pprint import pprint
+
+def get_recent_matches_for_user(user_id):
+    ''' Return recent matches for a user based on their frequency preference. '''
+    user = User.query.get(user_id)
+
+    time_thresholds = {
+        'MULTIPLE': timedelta(days=3.5),
+        'WEEKLY': timedelta(days=7),
+        'FORTHNIGHTLY': timedelta(days=14),
+        'MONTHLY': timedelta(days=30)
+    }
+    time_threshold = time_thresholds.get(user.frequency)
+    
+    return Match.query.filter(
+        Match.user_ids.contains(str(user_id)),
+        Match.date >= (datetime.now() - time_threshold).date()
+    ).all()
+
+def match_users():
+    # Fetch all users who are not paused
     active_users = User.query.filter_by(paused=False).all()
 
-    # Function to create preference groups
-    def create_preference_groups(users):
-        groups = defaultdict(set)
-        for user in users:
-            groups.setdefault(user.preferred_days or '*', []).append(user)
-            groups.setdefault(user.preferred_times or '*', []).append(user)
-            groups.setdefault(user.interests or '*', []).append(user)
-        return groups
+    frequency_order = ['MULTIPLE', 'WEEKLY', 'FORTHNIGHTLY', 'MONTHLY']
+    sorted_users = sorted(active_users, key=lambda x: frequency_order.index(x.frequency or 'WEEKLY'))
 
-    # Create preference groups
-    preference_groups = create_preference_groups(active_users)
-
-    # Create a list of potential matches by matching users within the same group
-    potential_matches = []
-    for group in preference_groups.values():
-        group_matches = [comb for comb in combinations(group, 2) if comb[0].id != comb[1].id]
-        potential_matches.extend(group_matches)
-
-    # Shuffle the list of potential matches to ensure randomness
-    shuffle(potential_matches)
-
-    # Select matches, making sure each user is only in one match
     matches = []
-    matched_users = set()
-    for match in potential_matches:
-        if match[0].id not in matched_users and match[1].id not in matched_users:
-            matches.append(match)
-            matched_users.add(match[0].id)
-            matched_users.add(match[1].id)
+    while sorted_users:
+        user = sorted_users.pop(0)
+        print('looking for: ', user)
+        recent_matches = get_recent_matches_for_user(user.id)
+        print('recent matches: ', recent_matches)
+        
+        # Check if the user has been matched as per their frequency preference
+        if len(recent_matches) >= frequency_order.index(user.frequency):
+            continue
 
+        for potential_match in sorted_users:
+            # Match by location
+            user_locations = set(user.location.split(',')) if user.location else set()
+            potential_match_locations = set(potential_match.location.split(',')) if potential_match.location else set()
+
+            if user_locations and potential_match_locations and not user_locations.intersection(potential_match_locations):
+                continue
+            
+            # Match by preferred days
+            if user.preferred_days and potential_match.preferred_days:
+                user_days = set(user.preferred_days.split(','))
+                match_days = set(potential_match.preferred_days.split(','))
+                if not user_days.intersection(match_days):
+                    continue
+
+            # If all checks passed, they are a match
+            matches.append({user, potential_match})
+            print('FOUND MATCH: ', potential_match)
+            
+            # Record match in the Match table
+            new_match = Match(
+                user_ids=f"{user.id},{potential_match.id}",
+                location=user.location or potential_match.location,
+                time=datetime.now().time(),
+                date=datetime.now().date()
+            )
+
+            # TODO(add matches to the db)
+            # db.session.add(new_match)
+            # db.session.commit()
+
+            sorted_users.remove(potential_match)
+            break
+    print('FULL MATCHES: ', matches)
     return matches

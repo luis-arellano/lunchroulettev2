@@ -50,6 +50,23 @@ The db is stored in AWS RDS.
 -host name: is database-1.ciiowaujelgi.us-west-2.rds.amazonaws.com
 -database: lunchroulette
 
+To update the dabase, we are using flask-migrate. Whenever you make changes to your models.py file, create a migration:
+
+
+flask db init    
+
+this will create a new directory called migrations.
+
+flask db migrate -m "Some description of the changes you made"
+
+to see the list of sql commands without applying them run:
+
+flask db upgrade --sql
+
+now we can run:
+flask db upgrade
+
+
 # Working with Env Variables
 
 To get the environmental variables stored in the machine we need to save them on ~/.bash_profile (mac)

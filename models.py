@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     frequency = db.Column(db.String(120), nullable=True)
     interests = db.Column(db.String(120), nullable=True)
     paused = db.Column(db.Boolean, default=False)
+    is_matched = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -31,7 +32,7 @@ class Match(db.Model):
     __tablename__ = 'matches'
     id = db.Column(db.Integer, primary_key=True)
     user_ids = db.Column(db.String(120), nullable=False)
-    location = db.Column(db.String(120), nullable=False)
+    location = db.Column(db.String(120), nullable=True)
     time = db.Column(db.String(80), nullable=False)
     date = db.Column(db.String(80), nullable=False)
 
